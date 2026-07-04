@@ -26,6 +26,7 @@ import (
 
 	"github.com/meshery/meshery/mesheryctl/internal/cli/root/config"
 	"github.com/meshery/meshery/mesheryctl/pkg/utils"
+	clientgo "github.com/meshery/meshkit/client-go"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -188,7 +189,7 @@ func createGKEConnection() error {
 	// TODO: move the GenerateConfigGKE logic to meshkit/client-go
 	utils.Log.Info("Configuring Meshery to access GKE...")
 	SAName := "sa-meshery-" + utils.StringWithCharset(8)
-	if err := utils.GenerateConfigGKE(utils.ConfigPath, SAName, "default"); err != nil {
+	if err := clientgo.GenerateConfigGKE(utils.ConfigPath, SAName, "default"); err != nil {
 		return errGcpGKEGetCredentials(err)
 	}
 	utils.Log.Debugf("GKE configuration is written to: %s", utils.ConfigPath)

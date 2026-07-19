@@ -254,12 +254,16 @@ export function makeTitle(rawdata, res) {
   )} ms \nMaximum: ${myRound(1000.0 * res.DurationHistogram.Max, 3)} ms\n`;
   var percStr_2 = 'Percentiles: ';
   if (res.DurationHistogram.Percentiles) {
-    for (var i = 0; i < res.DurationHistogram.Percentiles.length; i++) {
-      var p = res.DurationHistogram.Percentiles[i];
-      percStr_2 += `p${p.Percentile}: ${myRound(1000 * p.Value, 2)} ms; `;
-      percStr += `p${p.Percentile}: ${myRound(1000 * p.Value, 2)} ms; `;
+    if (res.DurationHistogram.Percentiles.length > 0) {
+      const pStrs = res.DurationHistogram.Percentiles.map(
+        (p: any) => `p${p.Percentile}: ${myRound(1000 * p.Value, 2)} ms`,
+      );
+      const joined = pStrs.join('; ');
+      percStr_2 += joined + '; ';
+      percStr += joined;
+    } else {
+      percStr = percStr.slice(0, -2);
     }
-    percStr = percStr.slice(0, -2);
   }
   var statusOk =
     typeof res.RetCodes !== 'undefined' && res.RetCodes !== null ? res.RetCodes[200] : 0;

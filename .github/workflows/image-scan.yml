@@ -65,6 +65,7 @@ jobs:
         id: check_issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
         run: |
           existing_issue=$(gh issue list --label "security" --state open --limit 100 --json title,number | \
             jq -r '.[] | select(.title | contains("Trivy Scan")) | .number' | head -n 1)
@@ -72,6 +73,7 @@ jobs:
 
       - name: Create or update GitHub issue
         if: steps.parse_trivy.outputs.vuln_count != '0'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

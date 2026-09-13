@@ -59,7 +59,7 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
     
       - name: Download Meshery Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.meshery-image }}
           path: .
@@ -105,8 +105,6 @@ jobs:
 
       - name: Upload Test Artifacts
         uses: ./.github/actions/upload-test-artifacts
-        with:
-          include-pr-metadata: ${{ github.event_name == 'pull_request' }}
 
       # The gate. Without it this job reported success no matter what Playwright
       # said: across the 20 "Meshery Build And Test" runs to 2026-08-05 the E2E

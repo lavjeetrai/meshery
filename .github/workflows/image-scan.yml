@@ -66,7 +66,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          existing_issue=$(gh issue list --label "security" --state open --limit 100 --json title,number 2>/dev/null | \
+          existing_issue=$(gh issue list --label "security" --state open --limit 100 --json title,number 2>/dev/null || echo "[]" | \
             jq -r '.[] | select(.title | contains("Trivy Scan")) | .number' | head -n 1) || true
           echo "existing_issue=$existing_issue" >> $GITHUB_OUTPUT
 
@@ -83,3 +83,4 @@ jobs:
           else
             gh issue comment ${{ steps.check_issue.outputs.existing_issue }} --body "$(cat issue_body.txt)" || true
           fi
+          true

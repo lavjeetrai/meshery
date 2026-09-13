@@ -540,7 +540,7 @@ func (l *RemoteProvider) InterceptLoginAndInitiateAnonymousUserSession(req *http
 	buf, _ := encoding.Marshal(connectionPayload)
 	data := bytes.NewReader(buf)
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 5 * time.Second}
 	newReq, _ := http.NewRequest("POST", anonnymouseUserEp.String(), data)
 
 	newReq.Header.Set("X-API-Key", GlobalTokenForAnonymousResults)

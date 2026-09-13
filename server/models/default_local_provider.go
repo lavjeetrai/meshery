@@ -746,7 +746,7 @@ func (l *DefaultLocalProvider) shipResults(_ *http.Request, data []byte) (string
 	remoteProviderURL, _ := url.Parse(l.ProviderBaseURL + "/api/performance/results")
 	cReq, _ := http.NewRequest(http.MethodPost, remoteProviderURL.String(), bf)
 	cReq.Header.Set("X-API-Key", GlobalTokenForAnonymousResults)
-	c := &http.Client{Timeout: 5 * time.Second}
+	c := &http.Client{}
 	resp, err := c.Do(cReq)
 	if err != nil {
 		l.Log.Warn(ErrDoRequest(err, cReq.Method, remoteProviderURL.String()))
@@ -797,7 +797,7 @@ func (l *DefaultLocalProvider) PublishMetrics(_ string, result *MesheryResult) e
 	remoteProviderURL, _ := url.Parse(l.ProviderBaseURL + "/result/metrics")
 	cReq, _ := http.NewRequest(http.MethodPut, remoteProviderURL.String(), bf)
 	cReq.Header.Set("X-API-Key", GlobalTokenForAnonymousResults)
-	c := &http.Client{Timeout: 5 * time.Second}
+	c := &http.Client{}
 	resp, err := c.Do(cReq)
 	if err != nil {
 		l.Log.Warn(ErrDoRequest(err, cReq.Method, remoteProviderURL.String()))

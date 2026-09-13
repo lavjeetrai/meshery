@@ -201,7 +201,7 @@ jobs:
       - name: Build Mesheryctl Binaries
         run: make
         working-directory: ./mesheryctl
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v4
         with:
           name: mesheryctl-binary
           path: ./mesheryctl/mesheryctl
@@ -220,7 +220,7 @@ jobs:
           fetch-depth: 2
       - name: Install lynx for xdg-open support
         run: sudo apt-get install lynx
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v4
         with:
           name: mesheryctl-binary
           path: ./mesheryctl/

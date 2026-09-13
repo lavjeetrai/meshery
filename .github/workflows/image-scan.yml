@@ -67,7 +67,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
         run: |
-          existing_issue=$(gh issue list --label "security" --state open --limit 100 --json title,number | \
+          existing_issue=$(gh issue list --label "security" --state open --limit 100 --json title,number || echo "[]" | \
             jq -r '.[] | select(.title | contains("Trivy Scan")) | .number' | head -n 1)
           echo "existing_issue=$existing_issue" >> $GITHUB_OUTPUT
 
@@ -81,7 +81,7 @@ jobs:
             gh issue create \
               --title "Trivy Scan: CRITICAL/HIGH Vulnerabilities Found - $(date +'%Y-%m-%d %H:%M:%S')" \
               --body-file issue_body.txt \
-              --label "security,auto-triaged"
+              --label "security,auto-triaged" || true
           else
-            gh issue comment ${{ steps.check_issue.outputs.existing_issue }} --body "$(cat issue_body.txt)"
+            gh issue comment ${{ steps.check_issue.outputs.existing_issue }} --body "$(cat issue_body.txt)" || true
           fi

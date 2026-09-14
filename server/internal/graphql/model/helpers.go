@@ -240,7 +240,7 @@ func GetMesheryBrokerEventTypes(event MeshSyncEventType) broker.EventType {
 func SelectivelyFetchNamespaces(cids []string, provider models.Provider) (namespaces []string, err error) {
 	namespaces = make([]string, 0)
 	var rows *sql.Rows
-	rows, err = provider.GetGenericPersister().Raw("SELECT DISTINCT rom.name as name FROM kubernetes_resources kr LEFT JOIN kubernetes_resource_object_meta rom ON kr.id = rom.id WHERE kr.kind = 'Namespace' AND kr.cluster_id IN ?", cids).Rows()
+	rows, err = provider.GetGenericPersister().Raw("SELECT DISTINCT rom.name as name FROM kubernetes_resources kr LEFT JOIN kubernetes_resource_object_meta rom ON kr.id = rom.id WHERE kr.kind = 'Namespace' AND kr.cluster_id IN (?)", cids).Rows()
 
 	if err != nil {
 		return nil, err

@@ -143,6 +143,16 @@ describe('HyperLinkDiv / getHyperLinkDiv', () => {
     const node = getHyperLinkDiv('Simple text');
     expect(React.isValidElement(node)).toBe(true);
   });
+
+  it('mitigates XSS by escaping malicious html tags', () => {
+    const maliciousText =
+      'Text with <script>alert(1)</script> and <img src="x" onerror="alert(1)">';
+    render(<HyperLinkDiv text={maliciousText} />);
+    const script = document.querySelector('script');
+    const img = document.querySelector('img');
+    expect(script).toBeNull();
+    expect(img).toBeNull();
+  });
 });
 
 describe('getSchema', () => {

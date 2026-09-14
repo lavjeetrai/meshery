@@ -1,9 +1,10 @@
 package utils
 
 import (
+	cryptorand "crypto/rand"
 	"encoding/json"
 	"fmt"
-	mathrand "math/rand"
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -102,10 +103,18 @@ func ToMapStringInterface(mp interface{}) map[string]interface{} {
 // GetRandomAlphabetsOfDigit generates a random string of a given length
 // using lowercase alphabets.
 func GetRandomAlphabetsOfDigit(length int) (s string) {
-	charSet := "abcdedfghijklmnopqrstuvwxyz"
+	charSet := "abcdefghijklmnopqrstuvwxyz"
+	charSetLen := big.NewInt(int64(len(charSet)))
 	for i := 0; i < length; i++ {
-		random := mathrand.Intn(len(charSet))
-		randomChar := charSet[random]
+		random, err := cryptorand.Int(cryptorand.Reader, charSetLen)
+		if err != nil {
+			// If crypto/rand fails, it indicates a severe system-level issue
+			// with the entropy source. Panicking is safer than returning a
+			// truncated or empty string, which could lead to predictable IDs
+			// or collisions.
+			panic(fmt.Errorf("crypto/rand failed to generate random number: %w", err))
+		}
+		randomChar := charSet[random.Int64()]
 		s += string(randomChar)
 	}
 	return

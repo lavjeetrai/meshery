@@ -10,6 +10,9 @@ permissions:
   issues: read
   pull-requests: read
 engine: copilot
+secrets:
+  - name: COPILOT_GITHUB_TOKEN
+    description: GitHub Token for Copilot
 imports:
   - .github/agents/meshery-code-contributor.md
 timeout-minutes: 20

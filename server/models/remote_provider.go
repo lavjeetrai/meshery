@@ -686,8 +686,15 @@ func (l *RemoteProvider) InitiateLogin(w http.ResponseWriter, r *http.Request, _
 		return
 	}
 
-	// TODO: go to ref cookie
-	http.Redirect(w, r, "/", http.StatusFound)
+	redirectURL := resolvePostLoginRedirect(selectPostLoginRefValue(r, l.RefCookieName), "/")
+	http.SetCookie(w, &http.Cookie{
+		Name:     l.RefCookieName,
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1,
+	})
+	l.Log.Info(fmt.Sprintf("[AUTH_FLOW] step=InitiateLogin action=redirect target=%s reason=has_token", redirectURL))
+	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
 // GetUserDetails - returns the user details

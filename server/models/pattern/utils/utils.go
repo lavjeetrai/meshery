@@ -101,14 +101,16 @@ func ToMapStringInterface(mp interface{}) map[string]interface{} {
 
 // GetRandomAlphabetsOfDigit generates a random string of a given length
 // using lowercase alphabets.
-func GetRandomAlphabetsOfDigit(length int) (s string) {
-	charSet := "abcdedfghijklmnopqrstuvwxyz"
-	for i := 0; i < length; i++ {
-		random := mathrand.Intn(len(charSet))
-		randomChar := charSet[random]
-		s += string(randomChar)
+func GetRandomAlphabetsOfDigit(length int) string {
+	if length <= 0 {
+		return ""
 	}
-	return
+	const charSet = "abcdedfghijklmnopqrstuvwxyz"
+	b := make([]byte, length)
+	for i := 0; i < length; i++ {
+		b[i] = charSet[mathrand.Intn(len(charSet))]
+	}
+	return string(b)
 }
 
 // IsDesignInAlpha2Format reports whether a stored design predates the versioned

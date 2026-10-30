@@ -1,6 +1,9 @@
 package utils
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 // TestIsDesignInAlpha2Format guards the design-import rendering regression:
 // freshly imported designs (Kubernetes manifests, Helm charts, Compose files)
@@ -71,6 +74,39 @@ func TestIsDesignInAlpha2Format(t *testing.T) {
 			}
 			if got != tt.wantAlpha2 {
 				t.Errorf("IsDesignInAlpha2Format() = %v, want %v", got, tt.wantAlpha2)
+			}
+		})
+	}
+}
+
+func TestGetRandomAlphabetsOfDigit(t *testing.T) {
+	lengths := []int{0, 1, 5, 10, 32}
+	charSet := "abcdedfghijklmnopqrstuvwxyz"
+	validChars := make(map[byte]bool)
+	for i := 0; i < len(charSet); i++ {
+		validChars[charSet[i]] = true
+	}
+
+	for _, length := range lengths {
+		res := GetRandomAlphabetsOfDigit(length)
+		if len(res) != length {
+			t.Errorf("GetRandomAlphabetsOfDigit(%d) length = %d; want %d", length, len(res), length)
+		}
+		for i := 0; i < len(res); i++ {
+			if !validChars[res[i]] {
+				t.Errorf("GetRandomAlphabetsOfDigit(%d) contains invalid character: %c", length, res[i])
+			}
+		}
+	}
+}
+
+func BenchmarkGetRandomAlphabetsOfDigit(b *testing.B) {
+	lengths := []int{5, 20, 100}
+	for _, length := range lengths {
+		b.Run(fmt.Sprintf("length-%d", length), func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				_ = GetRandomAlphabetsOfDigit(length)
 			}
 		})
 	}

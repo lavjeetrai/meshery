@@ -118,6 +118,7 @@ const MesherySettings = () => {
   const canViewSettings = useHasPermission(Keys.MesherySystemViewSettings);
   const canViewInfra = useHasPermission(Keys.InfrastructureManagementViewCloudNativeInfrastructure);
   const canViewRegistry = useHasPermission(Keys.MesherySystemViewRegistry);
+  const canResetSystem = useHasPermission(Keys.MesherySystemResetDatabase);
   const router = useRouter();
   const { selectedSettingsCategory } = settingsRouter(router);
   const theme = useTheme();
@@ -274,9 +275,8 @@ const MesherySettings = () => {
                     icon={<DatabaseIcon {...iconMedium} fill={theme.palette.icon.default} />}
                     label="Reset"
                     data-testid="settings-tab-reset"
-                    // tab="systemReset"
                     value={RESET}
-                    // disabled={!CAN(Keys.VIEW_SYSTEM_RESET.id, Keys.VIEW_SYSTEM_RESET.function)} TODO: uncomment when key get seeded
+                    disabled={!canResetSystem}
                   />
                 </CustomTooltip>
               </Tabs>
@@ -347,7 +347,7 @@ const MesherySettings = () => {
               </TabContainer>
             )}
 
-            {tabVal === RESET && (
+            {tabVal === RESET && canResetSystem && (
               <TabContainer>
                 <DatabaseSummary promptRef={systemResetPromptRef} />
               </TabContainer>

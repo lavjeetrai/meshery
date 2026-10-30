@@ -59,7 +59,7 @@ func TestFlushMeshSyncDataMixedNilAndPopulatedServerIDs(t *testing.T) {
 
 // newMeshSyncTestDB spins up an in-memory SQLite database with the MeshSync
 // resource tables migrated, returning a meshkit database handler over it.
-func newMeshSyncTestDB(t *testing.T) *database.Handler {
+func newMeshSyncTestDB(t testing.TB) *database.Handler {
 	t.Helper()
 	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
@@ -89,7 +89,7 @@ func newMeshSyncTestDB(t *testing.T) *database.Handler {
 // every dependent table, all sharing the resource's id (the same shape MeshSync
 // persists). Children are written as independent rows rather than via associations
 // so the linkage under test is explicit and SetID cannot rewrite the ids.
-func seedMeshSyncResource(t *testing.T, db *database.Handler, id, clusterID string) {
+func seedMeshSyncResource(t testing.TB, db *database.Handler, id, clusterID string) {
 	t.Helper()
 	rows := []interface{}{
 		// KubernetesResourceMeta left nil so the BeforeCreate SetID hook is a no-op
@@ -103,6 +103,24 @@ func seedMeshSyncResource(t *testing.T, db *database.Handler, id, clusterID stri
 	for _, row := range rows {
 		if err := db.Create(row).Error; err != nil {
 			t.Fatalf("failed to seed %T for %s: %v", row, id, err)
+		}
+	}
+}
+
+func BenchmarkFlushMeshSyncResourcesForCluster(b *testing.B) {
+	db := newMeshSyncTestDB(b)
+	const clusterID = "benchmark-cluster"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		for j := 0; j < 50; j++ {
+			id := fmt.Sprintf("res-%d-%d", i, j)
+			seedMeshSyncResource(b, db, id, clusterID)
+		}
+		b.StartTimer()
+
+		if err := FlushMeshSyncResourcesForCluster(db, clusterID); err != nil {
+			b.Fatalf("FlushMeshSyncResourcesForCluster returned error: %v", err)
 		}
 	}
 }

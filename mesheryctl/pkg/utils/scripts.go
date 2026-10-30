@@ -4,6 +4,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
+	"strings"
+)
+
+var (
+	k8sResourceNameRegex = regexp.MustCompile(`^[a-z0-9]([-.a-z0-9]*[a-z0-9])?$`)
+	validFilePathRegex   = regexp.MustCompile(`^[a-zA-Z0-9_./\-]+$`)
 )
 
 // GKEConfig holds configuration for GKE script generation
@@ -36,7 +43,20 @@ func (c *GKEConfig) validate() error {
 	if c.ConfigPath == "" || c.SAName == "" || c.Namespace == "" {
 		return ErrInvalidArgument(fmt.Errorf("configPath, SAName, and namespace are required"))
 	}
+	if !k8sResourceNameRegex.MatchString(c.SAName) {
+		return ErrInvalidArgument(fmt.Errorf("invalid SAName %q: must consist of lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", c.SAName))
+	}
+	if !k8sResourceNameRegex.MatchString(c.Namespace) {
+		return ErrInvalidArgument(fmt.Errorf("invalid Namespace %q: must consist of lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", c.Namespace))
+	}
+	if !validFilePathRegex.MatchString(c.ConfigPath) {
+		return ErrInvalidArgument(fmt.Errorf("invalid ConfigPath %q: path contains invalid characters", c.ConfigPath))
+	}
 	return nil
+}
+
+func quoteShellArg(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
 }
 
 func (c *GKEConfig) checkPrerequisites() error {
@@ -96,9 +116,9 @@ func (c *GKEConfig) generateScript() string {
 set -e
 set -o pipefail
 
-KUBECFG_FILE_NAME="%s"
+KUBECFG_FILE_NAME=%s
 SERVICE_ACCOUNT_NAME=%s
-NAMESPACE="%s"
+NAMESPACE=%s
 TARGET_FOLDER=$(dirname ${KUBECFG_FILE_NAME})
 
 %s
@@ -107,7 +127,7 @@ TARGET_FOLDER=$(dirname ${KUBECFG_FILE_NAME})
 %s
 
 main
-`, c.ConfigPath, c.SAName, c.Namespace,
+`, quoteShellArg(c.ConfigPath), quoteShellArg(c.SAName), quoteShellArg(c.Namespace),
 		serviceAccountTemplate(),
 		secretOpsTemplate(),
 		kubeConfigTemplate(),

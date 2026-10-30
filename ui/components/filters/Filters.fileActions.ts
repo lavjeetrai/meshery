@@ -66,17 +66,15 @@ export function createHandleSubmit({
     }
 
     if (type === FILE_OPS.FILE_UPLOAD || type === FILE_OPS.URL_UPLOAD) {
-      // todo: remove this
-      let body: any = { save: true };
+      let body: any = {};
       if (type === FILE_OPS.FILE_UPLOAD) {
         body = JSON.stringify({
-          ...body,
           filterData: { filterFile: data, name: metadata.name },
           config: metadata.config,
         });
       }
       if (type === FILE_OPS.URL_UPLOAD) {
-        body = JSON.stringify({ ...body, url: data, name: metadata.name, config: metadata.config });
+        body = JSON.stringify({ url: data, name: metadata.name, config: metadata.config });
       }
       uploadFilterFile({ uploadBody: body })
         .unwrap()

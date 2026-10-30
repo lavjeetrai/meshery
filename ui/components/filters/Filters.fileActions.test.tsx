@@ -131,7 +131,6 @@ describe('createHandleSubmit', () => {
     expect(uploadFilterFile).toHaveBeenCalled();
     const body = JSON.parse(uploadFilterFile.mock.calls[0][0].uploadBody);
     expect(body).toEqual({
-      save: true,
       filterData: { filterFile: 'binary', name: 'foo' },
       config: { x: 1 },
     });
@@ -158,7 +157,6 @@ describe('createHandleSubmit', () => {
 
     const body = JSON.parse(uploadFilterFile.mock.calls[0][0].uploadBody);
     expect(body).toEqual({
-      save: true,
       url: 'http://example.com',
       name: 'foo',
       config: { y: 2 },

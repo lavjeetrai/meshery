@@ -12,6 +12,7 @@ import (
 	"github.com/meshery/meshkit/utils"
 	"github.com/meshery/schemas/models/core"
 	modelv1beta1 "github.com/meshery/schemas/models/v1beta1/model"
+	"github.com/spf13/viper"
 
 	meshsyncmodel "github.com/meshery/meshsync/pkg/model"
 	"github.com/meshery/schemas/models/v1beta3/component"
@@ -140,12 +141,21 @@ func (mh *MeshsyncDataHandler) ListenToMeshSyncEvents(out chan *broker.Message) 
 	return nil
 }
 
+func getMeshsyncStoreUpdatesSubject() string {
+	subject := viper.GetString("MESHSYNC_STORE_UPDATES_SUBJECT")
+	if subject == "" {
+		return MeshsyncStoreUpdatesSubject
+	}
+	return subject
+}
+
 func (mh *MeshsyncDataHandler) subsribeToStoreUpdates(statusChan chan bool) {
 	defer mh.listenerWg.Done()
 
+	storeSubject := getMeshsyncStoreUpdatesSubject()
 	storeChan := make(chan *broker.Message, 1)
-	mh.log.Info("subscribing to store updates from meshsync on NATS subject: ", MeshsyncStoreUpdatesSubject)
-	err := mh.broker.SubscribeWithChannel(MeshsyncStoreUpdatesSubject, "", storeChan)
+	mh.log.Info("subscribing to store updates from meshsync on NATS subject: ", storeSubject)
+	err := mh.broker.SubscribeWithChannel(storeSubject, "", storeChan)
 	if err != nil {
 		mh.log.Error(ErrBrokerSubscription(err))
 		statusChan <- false
@@ -316,9 +326,8 @@ func RemoveStaleObjects(dbHandler database.Handler) error {
 func (mh *MeshsyncDataHandler) requestMeshsyncStore() error {
 	err := mh.broker.Publish(MeshsyncRequestSubject, &broker.Message{
 		Request: &broker.RequestObject{
-			Entity: "informer-store",
-			// TODO: Name of the Reply subject should be taken from some sort of configuration
-			Payload: struct{ Reply string }{Reply: MeshsyncStoreUpdatesSubject},
+			Entity:  "informer-store",
+			Payload: struct{ Reply string }{Reply: getMeshsyncStoreUpdatesSubject()},
 		}})
 	if err != nil {
 		return ErrRequestMeshsyncStore(err)

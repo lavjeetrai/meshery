@@ -13,6 +13,7 @@ import (
 	"github.com/meshery/meshkit/logger"
 	modelv1beta1 "github.com/meshery/schemas/models/v1beta1/model"
 	"github.com/meshery/schemas/models/v1beta3/component"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -438,6 +439,89 @@ func TestMeshsyncStoreUpdatesErrorWrappedWithMeshKit(t *testing.T) {
 	} else {
 		t.Fatalf("expected logged error to be a *meshkitErrors.Error, got %T", logged[0])
 	}
+}
+
+type captureBroker struct {
+	testMeshsyncBroker
+	subscribedSubjects []string
+	publishedSubject   string
+	publishedMessage   *meshkitBroker.Message
+}
+
+func (c *captureBroker) SubscribeWithChannel(subject string, group string, subscription chan *meshkitBroker.Message) error {
+	c.mu.Lock()
+	c.subscribedSubjects = append(c.subscribedSubjects, subject)
+	c.mu.Unlock()
+	return c.testMeshsyncBroker.SubscribeWithChannel(subject, group, subscription)
+}
+
+func (c *captureBroker) Publish(subject string, msg *meshkitBroker.Message) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.publishedSubject = subject
+	c.publishedMessage = msg
+	return nil
+}
+
+func TestGetMeshsyncStoreUpdatesSubjectConfiguration(t *testing.T) {
+	t.Run("DefaultSubject", func(t *testing.T) {
+		orig := viper.Get("MESHSYNC_STORE_UPDATES_SUBJECT")
+		defer viper.Set("MESHSYNC_STORE_UPDATES_SUBJECT", orig)
+		viper.Set("MESHSYNC_STORE_UPDATES_SUBJECT", "")
+
+		assert.Equal(t, MeshsyncStoreUpdatesSubject, getMeshsyncStoreUpdatesSubject())
+
+		broker := &captureBroker{}
+		logger := &fakeMeshsyncLogger{}
+		handler := &MeshsyncDataHandler{
+			broker: broker,
+			log:    logger,
+		}
+
+		err := handler.requestMeshsyncStore()
+		assert.NoError(t, err)
+		assert.Equal(t, MeshsyncRequestSubject, broker.publishedSubject)
+		req, ok := broker.publishedMessage.Request.Payload.(struct{ Reply string })
+		assert.True(t, ok)
+		assert.Equal(t, MeshsyncStoreUpdatesSubject, req.Reply)
+	})
+
+	t.Run("ConfiguredSubject", func(t *testing.T) {
+		customSubject := "custom.meshsync.store.updates"
+		orig := viper.Get("MESHSYNC_STORE_UPDATES_SUBJECT")
+		defer viper.Set("MESHSYNC_STORE_UPDATES_SUBJECT", orig)
+		viper.Set("MESHSYNC_STORE_UPDATES_SUBJECT", customSubject)
+
+		assert.Equal(t, customSubject, getMeshsyncStoreUpdatesSubject())
+
+		broker := &captureBroker{}
+		logger := &fakeMeshsyncLogger{}
+		handler := &MeshsyncDataHandler{
+			broker:     broker,
+			log:        logger,
+			stopCh:     make(chan struct{}),
+			listenerWg: &sync.WaitGroup{},
+		}
+
+		statusChan := make(chan bool, 1)
+		handler.listenerWg.Add(1)
+		go handler.subsribeToStoreUpdates(statusChan)
+		<-statusChan
+
+		close(handler.stopCh)
+		handler.listenerWg.Wait()
+
+		broker.mu.Lock()
+		assert.Contains(t, broker.subscribedSubjects, customSubject)
+		broker.mu.Unlock()
+
+		err := handler.requestMeshsyncStore()
+		assert.NoError(t, err)
+		assert.Equal(t, MeshsyncRequestSubject, broker.publishedSubject)
+		req, ok := broker.publishedMessage.Request.Payload.(struct{ Reply string })
+		assert.True(t, ok)
+		assert.Equal(t, customSubject, req.Reply)
+	})
 }
 
 func TestMeshsyncStoreUpdatesNonErrorObjectWrapped(t *testing.T) {

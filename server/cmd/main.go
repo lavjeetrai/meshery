@@ -126,6 +126,7 @@ func main() {
 	viper.SetDefault("SKIP_COMP_GEN", false)
 	viper.SetDefault("PLAYGROUND", false)
 	viper.SetDefault("MESHSYNC_DEFAULT_DEPLOYMENT_MODE", connections.MeshsyncDeploymentModeDefault)
+	viper.SetDefault("MESHSYNC_STORE_UPDATES_SUBJECT", models.MeshsyncStoreUpdatesSubject)
 	store.Initialize()
 
 	// initialize tracing. Skip entirely when OTEL_CONFIG is unset so local dev

@@ -191,16 +191,17 @@ setup_connection() {
     echo "🔁 Run #$i"
 
     kubectl --namespace "$MESHERY_K8S_NAMESPACE" apply -f "$SCRIPT_DIR/curl-upload-kubeconfig-job.yaml"
-    kubectl --namespace "$MESHERY_K8S_NAMESPACE" wait --for=condition=complete --timeout=60s job/$JOB_NAME
+    # Wait for job to complete, but don't fail immediately if it times out
+    kubectl --namespace "$MESHERY_K8S_NAMESPACE" wait --for=condition=complete --timeout=60s job/$JOB_NAME || true
     kubectl --namespace "$MESHERY_K8S_NAMESPACE" get job
 
     # Get the pod name for the job
     JOBS_POD_NAME=$(kubectl get pods --namespace "$MESHERY_K8S_NAMESPACE" --selector=job-name="$JOB_NAME" -o jsonpath='{.items[0].metadata.name}')
     # Output logs from the pod
-    kubectl --namespace "$MESHERY_K8S_NAMESPACE" logs "$JOBS_POD_NAME"
+    kubectl --namespace "$MESHERY_K8S_NAMESPACE" logs "$JOBS_POD_NAME" || true
 
     # delete job
-    kubectl --namespace "$MESHERY_K8S_NAMESPACE" delete job "$JOB_NAME"
+    kubectl --namespace "$MESHERY_K8S_NAMESPACE" delete job "$JOB_NAME" || true
   done
 
   echo "Scaling up meshsync to 1 replicas..."

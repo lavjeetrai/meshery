@@ -75,3 +75,17 @@ func TestIsDesignInAlpha2Format(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRandomAlphabetsOfDigit(t *testing.T) {
+	length := 10
+	s := GetRandomAlphabetsOfDigit(length)
+	if len(s) != length {
+		t.Errorf("Expected length %d, got %d", length, len(s))
+	}
+
+	for _, char := range s {
+		if char < 'a' || char > 'z' {
+			t.Errorf("Expected lowercase alphabet, got %c", char)
+		}
+	}
+}

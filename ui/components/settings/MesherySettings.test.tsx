@@ -222,4 +222,19 @@ describe('MesherySettings', () => {
     expect(screen.getByTestId('tab-Adapters')).toBeDisabled();
     expect(screen.queryByTestId('adapter-config')).not.toBeInTheDocument();
   });
+
+  it('renders the Reset tab content when selected and permission is granted', () => {
+    routerState.query = { settingsCategory: 'Reset' };
+    render(<MesherySettings />);
+    expect(screen.getByTestId('tab-Reset')).not.toBeDisabled();
+    expect(screen.getByTestId('database-summary')).toBeInTheDocument();
+  });
+
+  it('disables the Reset tab and its content when MesherySystemResetDatabase is denied', () => {
+    permissionOverrides.set(Keys.MesherySystemResetDatabase.id, false);
+    routerState.query = { settingsCategory: 'Reset' };
+    render(<MesherySettings />);
+    expect(screen.getByTestId('tab-Reset')).toBeDisabled();
+    expect(screen.queryByTestId('database-summary')).not.toBeInTheDocument();
+  });
 });

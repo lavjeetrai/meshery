@@ -146,6 +146,68 @@ func TestRemoteProviderInitiateLogin_PropagatesKnownVersions(t *testing.T) {
 	}
 }
 
+func TestRemoteProviderInitiateLogin_AlreadyAuthenticated_RedirectsToRefCookie(t *testing.T) {
+	provider := newTestRemoteProvider(t, "http://localhost:9876")
+	provider.RefCookieName = "meshery_ref"
+
+	req := newRemoteLoginRequest(t, "http://localhost:9081/user/login")
+	req.AddCookie(&http.Cookie{Name: TokenCookieName, Value: "valid-token"})
+	encodedRef := base64.RawURLEncoding.EncodeToString([]byte("/management/settings"))
+	req.AddCookie(&http.Cookie{Name: provider.RefCookieName, Value: encodedRef})
+
+	rec := httptest.NewRecorder()
+	provider.InitiateLogin(rec, req, false)
+
+	resp := rec.Result()
+	t.Cleanup(func() {
+		_ = resp.Body.Close()
+	})
+
+	if resp.StatusCode != http.StatusFound {
+		t.Fatalf("expected %d, got %d", http.StatusFound, resp.StatusCode)
+	}
+
+	if got := resp.Header.Get("Location"); got != "/management/settings" {
+		t.Fatalf("expected redirect to %q, got %q", "/management/settings", got)
+	}
+
+	// Verify cookie clearing header (MaxAge = -1)
+	var clearedRefCookie bool
+	for _, ck := range resp.Cookies() {
+		if ck.Name == provider.RefCookieName && ck.MaxAge < 0 {
+			clearedRefCookie = true
+			break
+		}
+	}
+	if !clearedRefCookie {
+		t.Fatal("expected ref cookie to be cleared on redirect")
+	}
+}
+
+func TestRemoteProviderInitiateLogin_AlreadyAuthenticated_FallbackRoot(t *testing.T) {
+	provider := newTestRemoteProvider(t, "http://localhost:9876")
+	provider.RefCookieName = "localhost:9876_ref"
+
+	req := newRemoteLoginRequest(t, "http://localhost:9081/user/login")
+	req.AddCookie(&http.Cookie{Name: TokenCookieName, Value: "valid-token"})
+
+	rec := httptest.NewRecorder()
+	provider.InitiateLogin(rec, req, false)
+
+	resp := rec.Result()
+	t.Cleanup(func() {
+		_ = resp.Body.Close()
+	})
+
+	if resp.StatusCode != http.StatusFound {
+		t.Fatalf("expected %d, got %d", http.StatusFound, resp.StatusCode)
+	}
+
+	if got := resp.Header.Get("Location"); got != "/" {
+		t.Fatalf("expected redirect to %q, got %q", "/", got)
+	}
+}
+
 func TestRemoteProviderDoRequest_DoesNotRefreshAnonymousToken(t *testing.T) {
 	var resourceCalls int32
 	var refreshCalls int32

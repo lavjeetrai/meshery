@@ -184,33 +184,91 @@ const sortProperties = (properties) => {
  */
 
 const getHyperLinkWithDescription = (description, linkColor) => {
+  if (typeof description !== 'string') return description;
+
   const markdownLinkRegex = /\[([^\]]+)]\((https?:\/\/[^\s]+)\)/g;
   const urlRegex = /(https?:\/\/[^\s]+)/g;
 
-  let processedDescription = description?.replace(markdownLinkRegex, (match, text, url) => {
-    return `<a href="${url}" style="color: ${linkColor};" target="_blank" rel="noreferrer">${text}</a>`;
-  });
-
-  if (!markdownLinkRegex.test(description)) {
-    processedDescription = processedDescription?.replace(
-      urlRegex,
-      (url) =>
-        `<a href="${url}" style="color: ${linkColor};" target="_blank" rel="noreferrer">${url}</a>`,
-    );
+  if (markdownLinkRegex.test(description)) {
+    markdownLinkRegex.lastIndex = 0;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    let keyIndex = 0;
+    while ((match = markdownLinkRegex.exec(description)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(
+          <React.Fragment key={`text-${keyIndex++}`}>
+            {description.substring(lastIndex, match.index)}
+          </React.Fragment>,
+        );
+      }
+      parts.push(
+        <a
+          key={`link-${keyIndex++}`}
+          href={match[2]}
+          style={{ color: linkColor }}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {match[1]}
+        </a>,
+      );
+      lastIndex = markdownLinkRegex.lastIndex;
+    }
+    if (lastIndex < description.length) {
+      parts.push(
+        <React.Fragment key={`text-${keyIndex++}`}>
+          {description.substring(lastIndex)}
+        </React.Fragment>,
+      );
+    }
+    return parts;
   }
 
-  return processedDescription;
+  if (urlRegex.test(description)) {
+    urlRegex.lastIndex = 0;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    let keyIndex = 0;
+    while ((match = urlRegex.exec(description)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(
+          <React.Fragment key={`text-${keyIndex++}`}>
+            {description.substring(lastIndex, match.index)}
+          </React.Fragment>,
+        );
+      }
+      parts.push(
+        <a
+          key={`link-${keyIndex++}`}
+          href={match[1]}
+          style={{ color: linkColor }}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {match[1]}
+        </a>,
+      );
+      lastIndex = urlRegex.lastIndex;
+    }
+    if (lastIndex < description.length) {
+      parts.push(
+        <React.Fragment key={`text-${keyIndex++}`}>
+          {description.substring(lastIndex)}
+        </React.Fragment>,
+      );
+    }
+    return parts;
+  }
+
+  return description;
 };
 
 export const HyperLinkDiv = ({ text }) => {
   const theme = useTheme();
-  return (
-    <div
-      dangerouslySetInnerHTML={{
-        __html: getHyperLinkWithDescription(text, theme.palette.primary.main),
-      }}
-    />
-  );
+  return <div>{getHyperLinkWithDescription(text, theme.palette.primary.main)}</div>;
 };
 
 // Backward-compatible alias for legacy callers that imported `getHyperLinkDiv`.

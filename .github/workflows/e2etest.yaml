@@ -24,7 +24,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
       - name: Uploading file
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: patternfile
           path: ./.github/samples/emojivoto.yaml

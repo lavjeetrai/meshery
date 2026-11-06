@@ -31,8 +31,10 @@ export const applyMinSizeConstraints = (
     const maxCols = colsConfig[bp] ?? 12;
     const defaults = defaultLayouts?.[bp] ?? [];
 
+    const defaultItemsMap = new Map(defaults.map((d) => [d.i, d]));
+
     constrained[bp] = items.map((item) => {
-      const defaultItem = defaults.find((d) => d.i === item.i);
+      const defaultItem = defaultItemsMap.get(item.i);
       const sizing = widgetSizing[item.i];
 
       const baseMinW = defaultItem?.w ?? sizing?.w ?? 1;

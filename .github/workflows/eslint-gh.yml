@@ -152,7 +152,7 @@ jobs:
 
       - name: Upload test report on failure
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: ui-unit-tests-report
           path: ui/test-report.junit.xml

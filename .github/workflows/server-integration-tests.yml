@@ -67,7 +67,7 @@ jobs:
         run: make server-integration-tests-meshsync-run
 
       - name: Upload sqlite file
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: meshery-integration-test-meshsync-mesherydb-file

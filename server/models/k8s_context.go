@@ -674,16 +674,17 @@ func FlushMeshSyncResourcesForCluster(db *database.Handler, clusterID string) er
 
 		// Child rows keyed by the parent resource's id, deleted before the parent so
 		// the subquery still resolves.
-		childModels := []any{
-			&meshsyncmodel.KubernetesKeyValue{},
-			&meshsyncmodel.KubernetesResourceSpec{},
-			&meshsyncmodel.KubernetesResourceStatus{},
-			&meshsyncmodel.KubernetesResourceObjectMeta{},
+		if err := tx.Where("id IN (?)", resourceIDs).Delete(&meshsyncmodel.KubernetesKeyValue{}).Error; err != nil {
+			return err
 		}
-		for _, child := range childModels {
-			if err := tx.Where("id IN (?)", resourceIDs).Delete(child).Error; err != nil {
-				return err
-			}
+		if err := tx.Where("id IN (?)", resourceIDs).Delete(&meshsyncmodel.KubernetesResourceSpec{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("id IN (?)", resourceIDs).Delete(&meshsyncmodel.KubernetesResourceStatus{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("id IN (?)", resourceIDs).Delete(&meshsyncmodel.KubernetesResourceObjectMeta{}).Error; err != nil {
+			return err
 		}
 
 		// Finally remove the parent resources for the cluster.

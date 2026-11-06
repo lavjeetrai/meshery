@@ -107,6 +107,51 @@ func seedMeshSyncResource(t *testing.T, db *database.Handler, id, clusterID stri
 	}
 }
 
+func BenchmarkFlushMeshSyncResourcesForCluster(b *testing.B) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		b.Fatalf("failed to open sqlite: %v", err)
+	}
+	sqlDB, err := gdb.DB()
+	if err != nil {
+		b.Fatalf("failed to get sql.DB: %v", err)
+	}
+	sqlDB.SetMaxOpenConns(1)
+	if err := gdb.AutoMigrate(
+		&meshsyncmodel.KubernetesKeyValue{},
+		&meshsyncmodel.KubernetesResource{},
+		&meshsyncmodel.KubernetesResourceSpec{},
+		&meshsyncmodel.KubernetesResourceStatus{},
+		&meshsyncmodel.KubernetesResourceObjectMeta{},
+	); err != nil {
+		b.Fatalf("failed to migrate meshsync tables: %v", err)
+	}
+	dbHandler := &database.Handler{DB: gdb}
+
+	const numResources = 200
+	const clusterID = "bench-cluster"
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		for r := 0; r < numResources; r++ {
+			resID := fmt.Sprintf("res-%d-%d", i, r)
+			gdb.Create(&meshsyncmodel.KubernetesResource{ID: resID, ClusterID: clusterID, Kind: "Pod", APIVersion: "v1"})
+			gdb.Create(&meshsyncmodel.KubernetesResourceObjectMeta{ID: resID, ClusterID: clusterID, Name: "pod-" + resID})
+			gdb.Create(&meshsyncmodel.KubernetesResourceSpec{ID: resID, Attribute: "{}"})
+			gdb.Create(&meshsyncmodel.KubernetesResourceStatus{ID: resID, Attribute: "{}"})
+			gdb.Create(&meshsyncmodel.KubernetesKeyValue{ID: resID, UniqueID: resID + "-kv", Kind: meshsyncmodel.KindLabel, Key: "app", Value: "demo"})
+		}
+		b.StartTimer()
+
+		if err := FlushMeshSyncResourcesForCluster(dbHandler, clusterID); err != nil {
+			b.Fatalf("FlushMeshSyncResourcesForCluster failed: %v", err)
+		}
+	}
+}
+
 // TestFlushMeshSyncResourcesForCluster is a regression test for the stale
 // "objects" table-name subqueries in FlushMeshSyncData. It asserts that flushing a
 // cluster removes the parent resource and every child row (spec, status,

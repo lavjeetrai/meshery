@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -19,6 +20,51 @@ func TestGKEConfigValidation(t *testing.T) {
 				Namespace:  "default",
 			},
 			wantError: false,
+		},
+		{
+			name: "invalid SAName with command injection semicolon",
+			config: GKEConfig{
+				ConfigPath: "/tmp/config",
+				SAName:     "test; id",
+				Namespace:  "default",
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid SAName with command substitution",
+			config: GKEConfig{
+				ConfigPath: "/tmp/config",
+				SAName:     "test$(id)",
+				Namespace:  "default",
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid Namespace with uppercase characters or injection",
+			config: GKEConfig{
+				ConfigPath: "/tmp/config",
+				SAName:     "test-sa",
+				Namespace:  "Default; reboot",
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid ConfigPath with shell metacharacters",
+			config: GKEConfig{
+				ConfigPath: "/tmp/config; rm -rf /",
+				SAName:     "test-sa",
+				Namespace:  "default",
+			},
+			wantError: true,
+		},
+		{
+			name: "invalid ConfigPath with backticks",
+			config: GKEConfig{
+				ConfigPath: "/tmp/`whoami`",
+				SAName:     "test-sa",
+				Namespace:  "default",
+			},
+			wantError: true,
 		},
 	}
 
@@ -60,6 +106,20 @@ func TestScriptGeneration(t *testing.T) {
 	script := cfg.generateScript()
 	if script == "" {
 		t.Error("Script generation failed: empty script")
+	}
+
+	expectedConfigPath := "KUBECFG_FILE_NAME='/tmp/test-config'"
+	expectedSAName := "SERVICE_ACCOUNT_NAME='test-service-account'"
+	expectedNamespace := "NAMESPACE='test-namespace'"
+
+	if !strings.Contains(script, expectedConfigPath) {
+		t.Errorf("Expected script to contain %q, got script: %s", expectedConfigPath, script)
+	}
+	if !strings.Contains(script, expectedSAName) {
+		t.Errorf("Expected script to contain %q, got script: %s", expectedSAName, script)
+	}
+	if !strings.Contains(script, expectedNamespace) {
+		t.Errorf("Expected script to contain %q, got script: %s", expectedNamespace, script)
 	}
 }
 

@@ -666,14 +666,10 @@ func FlushMeshSyncResourcesForCluster(db *database.Handler, clusterID string) er
 	// Run all deletes in one transaction so a mid-way failure rolls back rather than
 	// leaving the cluster partially flushed (e.g. children gone but parents kept).
 	return db.Transaction(func(tx *gorm.DB) error {
-		// The IDs of the resources being removed; reused as the scoping subquery for
-		// every child delete since each child row shares the parent resource's id.
-		resourceIDs := tx.Model(&meshsyncmodel.KubernetesResource{}).
+		subQuery := tx.Model(&meshsyncmodel.KubernetesResource{}).
 			Select("id").
 			Where("cluster_id = ?", clusterID)
 
-		// Child rows keyed by the parent resource's id, deleted before the parent so
-		// the subquery still resolves.
 		childModels := []any{
 			&meshsyncmodel.KubernetesKeyValue{},
 			&meshsyncmodel.KubernetesResourceSpec{},
@@ -681,7 +677,7 @@ func FlushMeshSyncResourcesForCluster(db *database.Handler, clusterID string) er
 			&meshsyncmodel.KubernetesResourceObjectMeta{},
 		}
 		for _, child := range childModels {
-			if err := tx.Where("id IN (?)", resourceIDs).Delete(child).Error; err != nil {
+			if err := tx.Model(child).Where("id IN (?)", subQuery).Delete(nil).Error; err != nil {
 				return err
 			}
 		}

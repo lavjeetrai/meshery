@@ -53,8 +53,8 @@ vi.mock('../../../../assets/icons/ErrorOutlineIcon', () => ({
 }));
 
 vi.mock('@rjsf/utils', () => ({
-  isMultiSelect: (schema: any) => !!schema?.uniqueItems && Array.isArray(schema.items?.enum),
-  getDefaultFormState: () => ({ rootSchema: {} }),
+  isMultiSelect: (_validator: any, schema: any) =>
+    !!schema?.uniqueItems && Array.isArray(schema.items?.enum),
 }));
 
 vi.mock('../../../../css/icons.styles', () => ({ iconSmall: {} }));
@@ -99,6 +99,7 @@ describe('ArrayFieldTemplate', () => {
     onAddClick: vi.fn(),
     title: 'Items',
     rawErrors: [],
+    registry: { rootSchema: {}, schemaUtils: { getValidator: () => ({}) } },
   };
 
   it('renders a normal array template with the title and item list', () => {

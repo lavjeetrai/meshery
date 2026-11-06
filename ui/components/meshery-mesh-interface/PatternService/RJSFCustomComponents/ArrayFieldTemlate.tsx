@@ -4,35 +4,35 @@ import AddIcon from '../../../../assets/icons/AddIcon';
 import SimpleAccordion from './Accordion';
 import { CustomTextTooltip } from '../CustomTextTooltip';
 import HelpOutlineIcon from '../../../../assets/icons/HelpOutlineIcon';
-import { isMultiSelect, getDefaultFormState } from '@rjsf/utils';
+import { isMultiSelect, ArrayFieldTemplateProps } from '@rjsf/utils';
 import ErrorOutlineIcon from '../../../../assets/icons/ErrorOutlineIcon';
 import { iconSmall } from '../../../../css/icons.styles';
 import pluralize from 'pluralize';
 import { safeDisplayValue, safeStringTitle } from '../helper';
 
-function getTitleForItem(props) {
+function getTitleForItem(props: any) {
   const title = getTitle(props);
   return pluralize.singular(typeof title === 'string' ? title : String(title ?? ''));
 }
 
-function getTitle(props) {
+function getTitle(props: any) {
   if (!props) return 'Unknown';
   return safeStringTitle(props.uiSchema['ui:title'] ?? props.title) || 'Unknown';
 }
 
-const ArrayFieldTemplate = (props) => {
-  const { schema, registry = getDefaultFormState(), classes } = props;
-  const safeId = props.idSchema?.$id ?? 'array-field';
-  const safeProps = { ...props, idSchema: props.idSchema ?? { $id: safeId } };
-  // TODO: update types so we don't have to cast registry as any
-  if (isMultiSelect(schema, registry.rootSchema)) {
+const ArrayFieldTemplate = (props: ArrayFieldTemplateProps) => {
+  const { schema, registry, idSchema } = props;
+  const safeId = idSchema?.$id ?? 'array-field';
+  const safeProps = { ...props, idSchema: idSchema ?? { $id: safeId } };
+
+  if (isMultiSelect(registry.schemaUtils.getValidator(), schema, registry.rootSchema)) {
     return <DefaultFixedArrayFieldTemplate {...safeProps} />;
   } else {
     return <DefaultNormalArrayFieldTemplate {...safeProps} />;
   }
 };
 
-const ArrayFieldTitle = ({ title, classes }) => {
+const ArrayFieldTitle = ({ title, classes }: any) => {
   const safeTitle = safeStringTitle(title);
   if (!safeTitle) return null;
 
@@ -47,7 +47,7 @@ const ArrayFieldTitle = ({ title, classes }) => {
 };
 
 // Used in the two templates
-const DefaultArrayItem = (props) => {
+const DefaultArrayItem = (props: any) => {
   const btnStyle = {
     flex: 1,
     paddingLeft: 0,
@@ -97,7 +97,7 @@ const DefaultArrayItem = (props) => {
   );
 };
 
-const DefaultFixedArrayFieldTemplate = (props) => {
+const DefaultFixedArrayFieldTemplate = (props: any) => {
   const { classes } = props;
   const safeId = props.idSchema?.$id ?? 'array-field';
 
@@ -144,7 +144,7 @@ const DefaultFixedArrayFieldTemplate = (props) => {
   );
 };
 
-const DefaultNormalArrayFieldTemplate = (props) => {
+const DefaultNormalArrayFieldTemplate = (props: any) => {
   const theme = useTheme();
   const { classes } = props;
   const safeId = props.idSchema?.$id ?? 'array-field';

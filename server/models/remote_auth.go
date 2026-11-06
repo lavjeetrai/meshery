@@ -168,6 +168,7 @@ func cloneRequestForRetry(req *http.Request) (*http.Request, error) {
 func (l *RemoteProvider) doRequestHelper(req *http.Request, token string) (*http.Response, error) {
 	c := &http.Client{
 		Transport: tracing.NewTransport(http.DefaultTransport), // Create tracing transport to pass tracing context
+		Timeout:   60 * time.Second,
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", token))
 	if token == GlobalTokenForAnonymousResults {

@@ -10,6 +10,8 @@ permissions:
   issues: read
   pull-requests: read
 engine: copilot
+secrets:
+  COPILOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 imports:
   - .github/agents/meshery-code-contributor.md
 timeout-minutes: 20

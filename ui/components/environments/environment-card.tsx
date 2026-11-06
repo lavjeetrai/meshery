@@ -181,19 +181,16 @@ const EnvironmentCard = ({
                     permissionKey={Keys.WorkspaceManagementViewConnections}
                   />
                 </AllocationButton>
-                {/* temporary disable workspace allocation button  */}
-                {/* {false && (
-                  <AllocationButton onClick={(e) => e.stopPropagation()}>
-                    <TransferButton
-                      title="Assigned Workspaces"
-                      count={
-                        environmentDetails.workspaces ? environmentDetails.workspaces?.length : 0
-                      }
-                      onAssign={onAssignConnection}
-                      disabled={false} // TODO: re-enable with permissionKey={Keys.WorkspaceManagementViewWorkspace}
-                    />
-                  </AllocationButton>
-                )} */}
+                <AllocationButton onClick={(e) => e.stopPropagation()}>
+                  <TransferButton
+                    title="Assigned Workspaces"
+                    count={
+                      environmentDetails.workspaces ? environmentDetails.workspaces?.length : 0
+                    }
+                    onAssign={onAssignConnection}
+                    permissionKey={Keys.WorkspaceManagementViewWorkspace}
+                  />
+                </AllocationButton>
               </Grid2>
             </Grid2>
           </CardWrapper>

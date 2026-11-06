@@ -179,7 +179,7 @@ describe('EnvironmentCard', () => {
 
     expect(screen.getAllByTestId('env-name')[0]).toHaveTextContent('dev');
     expect(screen.getByTestId('description')).toHaveTextContent('dev env');
-    expect(screen.getByTestId('tab-count')).toHaveTextContent('7');
+    expect(screen.getAllByTestId('tab-count')[0]).toHaveTextContent('7');
   });
 
   it('falls back to "No description" for environments without a description', () => {
